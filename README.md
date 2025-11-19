@@ -1,94 +1,76 @@
-# Clojure Development in Claude Code Runtime
+# Clojure Runtime for Claude Code
 
-**Quick setup for Clojure development with deps.edn in the Claude Code runtime environment.**
+A simple, reusable setup for Clojure development in the Claude Code runtime environment with HTTP proxy support.
 
-> **TL;DR**: Run `source setup-clojure.sh` and start coding with `clj`.
-
----
-
-## Why This Repo Exists
-
-The Claude Code runtime uses an authenticated HTTP proxy that Java applications can't use directly for HTTPS connections. This prevents Clojure CLI from downloading dependencies from Maven Central and Clojars.
-
-**Solution**: A local proxy wrapper that handles authentication transparently.
-
-## Quick Start (2 minutes)
-
-### 1. One-Command Setup
+## Quick Start
 
 ```bash
+# One-command setup
 source setup-clojure.sh
-```
 
-This automatically:
-- ✅ Installs Clojure CLI if needed
-- ✅ Starts the proxy wrapper
-- ✅ Configures all required settings
-
-### 2. Create a Clojure Project
-
-```bash
+# Create and run a Clojure project
 mkdir my-app && cd my-app
-```
-
-Create `deps.edn`:
-```clojure
+cat > deps.edn <<EOF
 {:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}}
  :aliases {:run {:main-opts ["-m" "my-app.core"]}}}
-```
+EOF
 
-Create `src/my_app/core.clj`:
-```clojure
+mkdir -p src/my_app
+cat > src/my_app/core.clj <<EOF
 (ns my-app.core)
-
 (defn -main [& args]
   (println "Hello from Clojure!"))
-```
+EOF
 
-### 3. Run Your App
-
-```bash
+# Run it
 clj -M:run
 ```
-
-**That's it!** Dependencies download automatically from Maven Central and Clojars.
-
----
 
 ## How It Works
 
+The Claude Code runtime uses an authenticated HTTP proxy. Java applications can't send authentication headers during HTTPS CONNECT requests, so we use a local proxy wrapper that:
+
+1. Listens on localhost (default: 8888)
+2. Auto-detects upstream proxy from `http_proxy` environment variable
+3. Adds authentication headers transparently
+4. Tunnels all traffic to the upstream proxy
+
 ```
-clj (Clojure CLI)
-    ↓
-localhost:8888 (proxy wrapper adds auth)
-    ↓
-Claude Code Proxy (authenticated)
-    ↓
-Maven Central / Clojars
+clj → localhost:8888 (wrapper adds auth) → Claude Code Proxy → Maven Central/Clojars
 ```
 
-The proxy wrapper (`proxy-wrapper.py`) runs locally and adds JWT authentication headers that Java can't add itself for HTTPS CONNECT requests.
+## Setup Script
 
----
+The `setup-clojure.sh` script is idempotent and reusable:
 
-## Working Example
+- **Auto-detects** proxy settings from environment variables
+- **Configurable** proxy port via `PROXY_PORT` environment variable
+- **Installs** Clojure CLI if needed
+- **Starts** proxy wrapper if not already running
+- **Creates** Maven and Gradle configurations
+- **Exports** Java system properties
 
-Check `test-clojure-deps/` for a complete working example:
+### Custom Proxy Port
 
 ```bash
-cd test-clojure-deps
-clj -M:run
+PROXY_PORT=9999 source setup-clojure.sh
 ```
 
-This demo app uses:
-- **org.clojure/clojure** from Maven Central
-- **org.clojure/data.json** from Maven Central
-- **cheshire/cheshire** from Clojars
+## Configuration
 
-All dependencies download through the proxy automatically.
+The setup script automatically creates:
 
----
+### Maven Settings (`~/.m2/settings.xml`)
+Configures Maven/Clojure CLI to use the local proxy wrapper.
+
+### Gradle Properties (`~/.gradle/gradle.properties`)
+Configures Gradle builds to use the local proxy wrapper.
+
+### Environment Variables
+```bash
+export JAVA_TOOL_OPTIONS="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=8888 ..."
+```
 
 ## Common Commands
 
@@ -102,224 +84,87 @@ clj -Spath
 # Run with main function
 clj -M:run
 
-# Run a specific namespace
+# Run specific namespace
 clj -M -m my-app.core
-
-# Add dependencies (edit deps.edn, then run):
-clj -Spath  # Downloads new deps
 ```
 
----
+## Example Project
+
+See `test-clojure-deps/` for a working example that downloads dependencies from both Maven Central and Clojars:
+
+```bash
+cd test-clojure-deps
+clj -M:run
+```
+
+## Using Gradle
+
+If you prefer Gradle or need Java interop:
+
+```gradle
+// build.gradle
+repositories {
+    mavenCentral()
+    maven { url "https://repo.clojars.org/" }
+}
+
+dependencies {
+    implementation 'org.clojure:clojure:1.11.1'
+}
+```
+
+The setup script automatically configures Gradle proxy settings.
 
 ## Troubleshooting
 
-### "Failed to read artifact descriptor" or DNS errors
-
-**Problem**: Proxy wrapper isn't running or configuration is missing.
-
-**Solution**:
+### Check if proxy is running
 ```bash
-# Check if proxy is running
 ps aux | grep proxy-wrapper.py
+tail -f /tmp/proxy.log
+```
 
-# Restart setup
+### Restart setup
+```bash
 source setup-clojure.sh
+```
 
-# Verify environment
+### Verify environment
+```bash
 echo $JAVA_TOOL_OPTIONS
 cat ~/.m2/settings.xml
 ```
 
-### "Service Unavailable (503)"
+### DNS or connection errors
+Re-run the setup script. It's idempotent and safe to run multiple times.
 
-**Problem**: Temporary Maven Central hiccup.
+## Architecture
 
-**Solution**: Just retry the command. The error is transient.
+### Why a Proxy Wrapper?
 
-### Check Proxy Logs
+Java's `HttpURLConnection` cannot send authentication headers during HTTPS CONNECT tunnel establishment. This is a known limitation of Java's HTTP client implementation.
 
-```bash
-tail -f /tmp/proxy.log
-```
-
-You should see `[REQUEST]` lines showing connections to `repo1.maven.org` and `repo.clojars.org`.
-
----
-
-## Configuration Details
-
-The setup script creates two configuration files:
-
-### 1. `~/.m2/settings.xml` (Maven/Clojure CLI)
-
-```xml
-<proxies>
-  <proxy>
-    <active>true</active>
-    <protocol>http</protocol>
-    <host>127.0.0.1</host>
-    <port>8888</port>
-  </proxy>
-  <proxy>
-    <active>true</active>
-    <protocol>https</protocol>
-    <host>127.0.0.1</host>
-    <port>8888</port>
-  </proxy>
-</proxies>
-```
-
-### 2. Environment Variables
-
-```bash
-export JAVA_TOOL_OPTIONS="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=8888 \
-                          -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=8888"
-```
-
-These are set automatically by `setup-clojure.sh`.
-
----
-
-## Adding Dependencies
-
-Edit `deps.edn` and add dependencies:
-
-```clojure
-{:deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        ring/ring-core {:mvn/version "1.9.6"}           ; From Clojars
-        cheshire/cheshire {:mvn/version "5.11.0"}       ; JSON library
-        http-kit/http-kit {:mvn/version "2.6.0"}}}      ; HTTP server
-```
-
-Run any `clj` command to download:
-```bash
-clj -Spath
-```
-
----
-
-## Project Structure
-
-```
-my-app/
-├── deps.edn          # Dependencies and configuration
-├── src/              # Source code (default path)
-│   └── my_app/
-│       └── core.clj
-└── test/             # Tests (add to :extra-paths in alias)
-    └── my_app/
-        └── core_test.clj
-```
-
-Add `.gitignore`:
-```
-.cpcache/
-.clj-kondo/
-.lsp/
-```
-
----
-
-## Using Aliases
-
-Create different aliases for dev, test, build:
-
-```clojure
-{:paths ["src"]
- :deps {org.clojure/clojure {:mvn/version "1.11.1"}}
-
- :aliases
- {:run {:main-opts ["-m" "my-app.core"]}
-
-  :test {:extra-paths ["test"]
-         :extra-deps {io.github.cognitect-labs/test-runner
-                      {:git/tag "v0.5.1" :git/sha "dfb30dd"}}}
-
-  :dev {:extra-deps {nrepl/nrepl {:mvn/version "1.0.0"}
-                     cider/cider-nrepl {:mvn/version "0.30.0"}}}}}
-```
-
-Usage:
-```bash
-clj -M:test           # Run tests
-clj -M:dev            # Start dev REPL with nREPL
-```
-
----
-
-## Alternative: Using Gradle
-
-If you prefer Gradle or need integration with Java projects, see [GRADLE.md](./GRADLE.md).
-
-Gradle works well but is less common in the Clojure community. The Clojure CLI with deps.edn is the standard tool.
-
----
-
-## Technical Background
-
-### Why Java Can't Use the Proxy Directly
-
-Java's `HttpURLConnection` can't send authentication headers during HTTPS CONNECT requests (used for establishing TLS tunnels). This is a limitation of Java's HTTP client implementation.
-
-The proxy wrapper solves this by:
+The proxy wrapper (`proxy-wrapper.py`) solves this by:
 1. Accepting unauthenticated connections from Java locally
-2. Adding authentication headers before forwarding to the real proxy
-3. Tunneling data bidirectionally after connection establishment
+2. Reading upstream proxy settings from `http_proxy` environment variable
+3. Adding authentication headers before forwarding to the real proxy
+4. Tunneling data bidirectionally after connection establishment
 
-For full technical details, see [FINDINGS.md](./FINDINGS.md).
-
----
-
-## Files in This Repo
+### Files
 
 | File | Purpose |
 |------|---------|
-| `setup-clojure.sh` | **Main setup script** - Run this first |
+| `setup-clojure.sh` | Main setup script (idempotent, reusable) |
 | `proxy-wrapper.py` | Local proxy that adds authentication |
-| `test-clojure-deps/` | Working example Clojure project |
-| `TEST_RESULTS.md` | Detailed test results and verification |
-| `FINDINGS.md` | Technical deep-dive on the proxy issue |
-| `setup-environment.sh` | Original multi-tool setup (legacy) |
-| `test-gradle/` | Gradle example (for Java interop) |
-
----
+| `test-clojure-deps/` | Example Clojure project with deps.edn |
 
 ## Verified To Work
 
-✅ **Clojure CLI** (clj/clojure) with deps.edn
-✅ **Maven Central** dependency downloads
-✅ **Clojars** dependency downloads
-✅ **Git dependencies** via deps.edn
-✅ **Gradle** with Clojure dependencies
+- Clojure CLI (clj/clojure) with deps.edn
+- Maven Central dependency downloads
+- Clojars dependency downloads
+- Git dependencies via deps.edn
+- Gradle builds with Clojure dependencies
 
-See [TEST_RESULTS.md](./TEST_RESULTS.md) for complete test results.
+## License
 
----
-
-## Getting Help
-
-**Issue**: Proxy not working
-**Check**: `ps aux | grep proxy-wrapper && tail /tmp/proxy.log`
-
-**Issue**: Dependencies not downloading
-**Check**: `cat ~/.m2/settings.xml && echo $JAVA_TOOL_OPTIONS`
-
-**Issue**: DNS resolution errors
-**Solution**: Run `source setup-clojure.sh` again
-
-**Still stuck?**
-Check the detailed troubleshooting in [TEST_RESULTS.md](./TEST_RESULTS.md) or review [FINDINGS.md](./FINDINGS.md) for technical details.
-
----
-
-## Summary
-
-This repository enables standard Clojure development with `clj` and `deps.edn` in the Claude Code runtime:
-
-1. **Run** `source setup-clojure.sh`
-2. **Create** your `deps.edn` file
-3. **Start coding** with `clj`
-
-The proxy wrapper handles all authentication automatically. No special commands or workarounds needed after initial setup.
-
-**Happy Clojure coding! 🚀**
+MIT License - See LICENSE file for details.

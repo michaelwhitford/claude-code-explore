@@ -3,10 +3,20 @@
 #
 # This script sets up everything needed for Clojure development with deps.edn
 # in the Claude Code runtime environment.
+#
+# Features:
+# - Idempotent: Safe to run multiple times
+# - Configurable: Set PROXY_PORT environment variable to customize port
+# - Auto-detects: Reads upstream proxy from http_proxy environment variable
+#
+# Usage:
+#   source setup-clojure.sh
+#   PROXY_PORT=9999 source setup-clojure.sh
 
 set -e
 
-PROXY_PORT=8888
+# Configuration (can be overridden by environment variables)
+PROXY_PORT="${PROXY_PORT:-8888}"
 PROXY_LOG="/tmp/proxy.log"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -14,9 +24,24 @@ echo "============================================================"
 echo "Clojure Development Setup for Claude Code"
 echo "============================================================"
 echo ""
+echo "Configuration:"
+echo "  Proxy port: $PROXY_PORT"
+echo "  Proxy log:  $PROXY_LOG"
+echo ""
 
 # ============================================================
-# 1. Check/Install Clojure CLI
+# 1. Verify http_proxy environment variable
+# ============================================================
+
+if [ -z "$http_proxy" ] && [ -z "$HTTP_PROXY" ]; then
+    echo "⚠ WARNING: No http_proxy environment variable detected"
+    echo "  The proxy wrapper requires http_proxy to be set"
+    echo "  Continuing anyway, but proxy may not work correctly"
+    echo ""
+fi
+
+# ============================================================
+# 2. Check/Install Clojure CLI
 # ============================================================
 
 if command -v clojure &> /dev/null; then
@@ -37,20 +62,29 @@ fi
 echo ""
 
 # ============================================================
-# 2. Start Proxy Wrapper
+# 3. Start Proxy Wrapper
 # ============================================================
 
-if pgrep -f "proxy-wrapper.py" > /dev/null; then
-    PROXY_PID=$(pgrep -f "proxy-wrapper.py")
-    echo "✓ Proxy wrapper already running (PID: $PROXY_PID)"
+if pgrep -f "proxy-wrapper.py.*$PROXY_PORT" > /dev/null; then
+    PROXY_PID=$(pgrep -f "proxy-wrapper.py.*$PROXY_PORT")
+    echo "✓ Proxy wrapper already running on port $PROXY_PORT (PID: $PROXY_PID)"
 else
-    echo "Starting proxy wrapper..."
+    # Check if different port is running
+    if pgrep -f "proxy-wrapper.py" > /dev/null; then
+        OLD_PID=$(pgrep -f "proxy-wrapper.py")
+        echo "⚠ Proxy wrapper running on different port (PID: $OLD_PID)"
+        echo "  Stopping old proxy wrapper..."
+        kill $OLD_PID 2>/dev/null || true
+        sleep 1
+    fi
+
+    echo "Starting proxy wrapper on port $PROXY_PORT..."
     if [ -f "$SCRIPT_DIR/proxy-wrapper.py" ]; then
         python3 "$SCRIPT_DIR/proxy-wrapper.py" $PROXY_PORT > $PROXY_LOG 2>&1 &
         sleep 2
 
-        if pgrep -f "proxy-wrapper.py" > /dev/null; then
-            PROXY_PID=$(pgrep -f "proxy-wrapper.py")
+        if pgrep -f "proxy-wrapper.py.*$PROXY_PORT" > /dev/null; then
+            PROXY_PID=$(pgrep -f "proxy-wrapper.py.*$PROXY_PORT")
             echo "✓ Proxy wrapper started (PID: $PROXY_PID)"
         else
             echo "✗ Failed to start proxy wrapper"
@@ -67,17 +101,15 @@ echo "  Logs: $PROXY_LOG"
 echo ""
 
 # ============================================================
-# 3. Configure Maven Settings (for Clojure CLI)
+# 4. Configure Maven Settings (for Clojure CLI)
 # ============================================================
 
 MAVEN_SETTINGS="$HOME/.m2/settings.xml"
 mkdir -p "$HOME/.m2"
 
-if [ -f "$MAVEN_SETTINGS" ]; then
-    echo "✓ Maven settings.xml already exists"
-else
-    echo "Creating Maven settings.xml for proxy..."
-    cat > "$MAVEN_SETTINGS" <<'EOF'
+# Always recreate settings.xml to ensure port is correct (idempotent)
+echo "Configuring Maven settings.xml for proxy..."
+cat > "$MAVEN_SETTINGS" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -89,7 +121,7 @@ else
       <active>true</active>
       <protocol>http</protocol>
       <host>127.0.0.1</host>
-      <port>8888</port>
+      <port>$PROXY_PORT</port>
       <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
     </proxy>
     <proxy>
@@ -97,19 +129,18 @@ else
       <active>true</active>
       <protocol>https</protocol>
       <host>127.0.0.1</host>
-      <port>8888</port>
+      <port>$PROXY_PORT</port>
       <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
     </proxy>
   </proxies>
 </settings>
 EOF
-    echo "✓ Created $MAVEN_SETTINGS"
-fi
+echo "✓ Created $MAVEN_SETTINGS"
 
 echo ""
 
 # ============================================================
-# 4. Export Java System Properties
+# 5. Export Java System Properties
 # ============================================================
 
 echo "Exporting Java proxy settings..."
@@ -120,24 +151,22 @@ echo "✓ JAVA_TOOL_OPTIONS configured"
 echo ""
 
 # ============================================================
-# 5. Optional: Gradle Configuration
+# 6. Configure Gradle (Optional but recommended)
 # ============================================================
 
 GRADLE_PROPS="$HOME/.gradle/gradle.properties"
-if [ ! -f "$GRADLE_PROPS" ]; then
-    echo "Creating Gradle proxy configuration (optional)..."
-    mkdir -p "$HOME/.gradle"
-    cat > "$GRADLE_PROPS" <<EOF
+mkdir -p "$HOME/.gradle"
+
+# Always recreate gradle.properties to ensure port is correct (idempotent)
+echo "Configuring Gradle proxy settings..."
+cat > "$GRADLE_PROPS" <<EOF
 systemProp.http.proxyHost=127.0.0.1
 systemProp.http.proxyPort=$PROXY_PORT
 systemProp.https.proxyHost=127.0.0.1
 systemProp.https.proxyPort=$PROXY_PORT
 systemProp.http.nonProxyHosts=localhost|127.0.0.1
 EOF
-    echo "✓ Created $GRADLE_PROPS"
-else
-    echo "✓ Gradle configuration already exists"
-fi
+echo "✓ Created $GRADLE_PROPS"
 
 echo ""
 
@@ -165,5 +194,8 @@ echo "  cd test-clojure-deps && clj -M:run"
 echo ""
 echo "To check proxy activity:"
 echo "  tail -f $PROXY_LOG"
+echo ""
+echo "To use a different port next time:"
+echo "  PROXY_PORT=9999 source setup-clojure.sh"
 echo ""
 echo "============================================================"
