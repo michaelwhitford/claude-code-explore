@@ -30,7 +30,7 @@ else
     else
         echo "✗ Clojure installer not found: $SCRIPT_DIR/linux-install-1.11.1.1435.sh"
         echo "  Please ensure the installer is in the repository"
-        return 1
+        exit 1
     fi
 fi
 
@@ -55,11 +55,11 @@ else
         else
             echo "✗ Failed to start proxy wrapper"
             echo "  Check logs: tail $PROXY_LOG"
-            return 1
+            exit 1
         fi
     else
         echo "✗ proxy-wrapper.py not found in $SCRIPT_DIR"
-        return 1
+        exit 1
     fi
 fi
 
