@@ -5,9 +5,9 @@
 (defn -main
   "A simple Clojure application to test deps.edn and runtime"
   [& args]
-  (println "=" 60)
+  (println (apply str (repeat 60 "=")))
   (println "Clojure Runtime Test with deps.edn")
-  (println "=" 60)
+  (println (apply str (repeat 60 "=")))
   (println)
 
   ;; Test basic Clojure functionality
@@ -37,7 +37,7 @@
     (println "   Parsed back:" (cheshire/parse-string json-str true)))
   (println)
 
-  (println "=" 60)
+  (println (apply str (repeat 60 "=")))
   (println "All tests passed! Clojure runtime is working perfectly.")
   (println "Dependencies from Maven Central and Clojars were resolved.")
-  (println "=" 60))
+  (println (apply str (repeat 60 "="))))
