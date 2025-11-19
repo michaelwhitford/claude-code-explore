@@ -17,13 +17,6 @@ PROXY_LOG="/tmp/proxy.log"
 MAVEN_SETTINGS="$HOME/.m2/settings.xml"
 GRADLE_PROPS="$HOME/.gradle/gradle.properties"
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
 # Test results
 TESTS_PASSED=0
 TESTS_FAILED=0
@@ -39,17 +32,17 @@ echo "============================================================"
 echo ""
 
 pass() {
-    echo -e "${GREEN}✓${NC} $1"
+    echo "[PASS] $1"
     ((TESTS_PASSED++))
 }
 
 fail() {
-    echo -e "${RED}✗${NC} $1"
+    echo "[FAIL] $1"
     ((TESTS_FAILED++))
 }
 
 info() {
-    echo -e "${BLUE}ℹ${NC} $1"
+    echo "[INFO] $1"
 }
 
 section() {
@@ -375,12 +368,12 @@ echo "============================================================"
 echo "Idempotency Test Summary"
 echo "============================================================"
 echo ""
-echo -e "${GREEN}Passed:${NC} $TESTS_PASSED"
-echo -e "${RED}Failed:${NC} $TESTS_FAILED"
+echo "Passed: $TESTS_PASSED"
+echo "Failed: $TESTS_FAILED"
 echo ""
 
 if [ $TESTS_FAILED -eq 0 ]; then
-    echo -e "${GREEN}✓ All idempotency tests passed!${NC}"
+    echo "[PASS] All idempotency tests passed!"
     echo ""
     echo "The setup-clojure.sh script is truly idempotent:"
     echo "  - Safe to run multiple times"
@@ -390,7 +383,7 @@ if [ $TESTS_FAILED -eq 0 ]; then
     echo ""
     exit 0
 else
-    echo -e "${RED}✗ Some idempotency tests failed!${NC}"
+    echo "[FAIL] Some idempotency tests failed!"
     echo ""
     echo "The setup script may not be fully idempotent."
     echo "Review the failures above for details."

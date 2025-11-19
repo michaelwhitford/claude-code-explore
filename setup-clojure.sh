@@ -34,7 +34,7 @@ echo ""
 # ============================================================
 
 if [ -z "$http_proxy" ] && [ -z "$HTTP_PROXY" ]; then
-    echo "⚠ WARNING: No http_proxy environment variable detected"
+    echo "[WARN] No http_proxy environment variable detected"
     echo "  The proxy wrapper requires http_proxy to be set"
     echo "  Continuing anyway, but proxy may not work correctly"
     echo ""
@@ -45,15 +45,15 @@ fi
 # ============================================================
 
 if command -v clojure &> /dev/null; then
-    echo "✓ Clojure CLI already installed"
+    echo "[OK] Clojure CLI already installed"
     clojure --version
 else
     echo "Installing Clojure CLI..."
     if [ -f "$SCRIPT_DIR/linux-install-1.11.1.1435.sh" ]; then
         bash "$SCRIPT_DIR/linux-install-1.11.1.1435.sh"
-        echo "✓ Clojure CLI installed successfully"
+        echo "[OK] Clojure CLI installed successfully"
     else
-        echo "✗ Clojure installer not found: $SCRIPT_DIR/linux-install-1.11.1.1435.sh"
+        echo "[ERROR] Clojure installer not found: $SCRIPT_DIR/linux-install-1.11.1.1435.sh"
         echo "  Please ensure the installer is in the repository"
         return 1
     fi
@@ -67,12 +67,12 @@ echo ""
 
 if pgrep -f "proxy-wrapper.py.*$PROXY_PORT" > /dev/null; then
     PROXY_PID=$(pgrep -f "proxy-wrapper.py.*$PROXY_PORT")
-    echo "✓ Proxy wrapper already running on port $PROXY_PORT (PID: $PROXY_PID)"
+    echo "[OK] Proxy wrapper already running on port $PROXY_PORT (PID: $PROXY_PID)"
 else
     # Check if different port is running
     if pgrep -f "proxy-wrapper.py" > /dev/null; then
         OLD_PID=$(pgrep -f "proxy-wrapper.py")
-        echo "⚠ Proxy wrapper running on different port (PID: $OLD_PID)"
+        echo "[WARN] Proxy wrapper running on different port (PID: $OLD_PID)"
         echo "  Stopping old proxy wrapper..."
         kill $OLD_PID 2>/dev/null || true
         sleep 1
@@ -85,14 +85,14 @@ else
 
         if pgrep -f "proxy-wrapper.py.*$PROXY_PORT" > /dev/null; then
             PROXY_PID=$(pgrep -f "proxy-wrapper.py.*$PROXY_PORT")
-            echo "✓ Proxy wrapper started (PID: $PROXY_PID)"
+            echo "[OK] Proxy wrapper started (PID: $PROXY_PID)"
         else
-            echo "✗ Failed to start proxy wrapper"
+            echo "[ERROR] Failed to start proxy wrapper"
             echo "  Check logs: tail $PROXY_LOG"
             return 1
         fi
     else
-        echo "✗ proxy-wrapper.py not found in $SCRIPT_DIR"
+        echo "[ERROR] proxy-wrapper.py not found in $SCRIPT_DIR"
         return 1
     fi
 fi
@@ -135,7 +135,7 @@ cat > "$MAVEN_SETTINGS" <<EOF
   </proxies>
 </settings>
 EOF
-echo "✓ Created $MAVEN_SETTINGS"
+echo "[OK] Created $MAVEN_SETTINGS"
 
 echo ""
 
@@ -147,7 +147,7 @@ echo "Exporting Java proxy settings..."
 
 export JAVA_TOOL_OPTIONS="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=$PROXY_PORT -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=$PROXY_PORT"
 
-echo "✓ JAVA_TOOL_OPTIONS configured"
+echo "[OK] JAVA_TOOL_OPTIONS configured"
 echo ""
 
 # ============================================================
@@ -166,7 +166,7 @@ systemProp.https.proxyHost=127.0.0.1
 systemProp.https.proxyPort=$PROXY_PORT
 systemProp.http.nonProxyHosts=localhost|127.0.0.1
 EOF
-echo "✓ Created $GRADLE_PROPS"
+echo "[OK] Created $GRADLE_PROPS"
 
 echo ""
 
@@ -175,7 +175,7 @@ echo ""
 # ============================================================
 
 echo "============================================================"
-echo "Setup Complete! ✓"
+echo "Setup Complete!"
 echo "============================================================"
 echo ""
 echo "You can now use Clojure CLI with deps.edn:"
