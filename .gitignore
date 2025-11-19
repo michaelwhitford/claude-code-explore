@@ -34,8 +34,13 @@ Thumbs.db
 # Clojure
 .cpcache/
 .nrepl-port
+.nrepl-history
 .lein-*
 pom.xml.asc
+.clj-kondo/
+.lsp/
+.calva/
+.socket-repl-port
 
 # Allow pom.xml in test directories
 !test-maven/pom.xml
