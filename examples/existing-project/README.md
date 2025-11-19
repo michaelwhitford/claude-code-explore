@@ -16,7 +16,7 @@ Clojure project using `deps.edn` for dependency management.
 **Usage:**
 ```bash
 cd deps-edn-example
-clj -M:run
+clojure -M:run
 ```
 
 ### gradle-example
@@ -63,9 +63,9 @@ user-project/
 3. **Try to run their project:**
    ```bash
    # Common commands:
-   clj -M:run                    # If they have :run alias
-   clj -M -m their.main.ns       # Specify namespace
-   clj                           # Start REPL
+   clojure -M:run                    # If they have :run alias
+   clojure -M -m their.main.ns       # Specify namespace
+   clojure                           # Start REPL
    ```
 
 4. **If dependencies fail to download:**
@@ -164,7 +164,7 @@ cd user-project
 cat deps.edn
 
 # 4. Run based on their aliases
-clj -M:run          # Or whatever alias they have
+clojure -M:run          # Or whatever alias they have
 ```
 
 #### Pattern 2: Gradle Project
@@ -185,7 +185,7 @@ cd user-project
 source ../../setup/setup-clojure.sh
 
 # Then use either tool:
-clj -M:run          # Clojure CLI
+clojure -M:run          # Clojure CLI
 ./gradlew build     # Gradle
 ```
 
@@ -211,7 +211,7 @@ Ensure proxy can reach custom repository.
 **Solution:**
 ```bash
 # Validate deps.edn
-clj -Sdescribe
+clojure -Sdescribe
 
 # If error, check:
 # - Matching braces

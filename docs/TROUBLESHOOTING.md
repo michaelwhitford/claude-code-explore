@@ -299,7 +299,7 @@ source ./setup/setup-clojure.sh
 
 **Symptom:**
 - Dependencies download successfully
-- But `clj -M:run` fails
+- But `clojure -M:run` fails
 - Or REPL throws errors
 
 **Diagnosis:**

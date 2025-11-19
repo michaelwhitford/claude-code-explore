@@ -70,10 +70,10 @@ else
     fail "Clojure CLI command not found"
 fi
 
-if command -v clj &> /dev/null; then
-    pass "clj command found"
+if command -v clojure &> /dev/null; then
+    pass "clojure command found"
 else
-    fail "clj command not found"
+    fail "clojure command not found"
 fi
 
 # Check installation path

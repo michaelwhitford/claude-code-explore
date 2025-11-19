@@ -17,7 +17,7 @@ source ./setup/setup-clojure.sh
 ./verification/verify-setup.sh
 
 # Step 4: Test with example
-cd examples/greenfield/simple-app && clj -M:run
+cd examples/greenfield/simple-app && clojure -M:run
 ```
 
 **Read the complete guide:** [`docs/AI-AGENT-GUIDE.md`](docs/AI-AGENT-GUIDE.md)
@@ -128,13 +128,13 @@ Working examples for different scenarios:
 **Greenfield (new project):**
 ```bash
 cd examples/greenfield/simple-app
-clj -M:run
+clojure -M:run
 ```
 
 **Existing deps.edn project:**
 ```bash
 cd examples/existing-project/deps-edn-example
-clj -M:run
+clojure -M:run
 ```
 
 **Gradle build:**
@@ -224,7 +224,7 @@ tail -f /tmp/proxy.log
 PROXY_PORT=8889 source ./setup/setup-clojure.sh
 
 # Test with example
-cd examples/greenfield/simple-app && clj -M:run
+cd examples/greenfield/simple-app && clojure -M:run
 
 # Comprehensive testing
 ./verification/test-idempotency.sh
@@ -286,7 +286,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detailed analysis.
 
 ## Verified To Work
 
-✅ Clojure CLI (clj/clojure) with deps.edn
+✅ Clojure CLI (clojure) with deps.edn
 ✅ Maven Central dependency downloads
 ✅ Clojars dependency downloads
 ✅ Git dependencies via deps.edn
