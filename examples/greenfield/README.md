@@ -20,7 +20,7 @@ simple-app/
 
 ```bash
 cd simple-app
-clj -M:run
+clojure -M:run
 ```
 
 **Expected output:**
@@ -63,7 +63,7 @@ mkdir -p src/my_project
 
 **Step 4: Run it**
 ```bash
-clj -M:run
+clojure -M:run
 ```
 
 ### Adding Dependencies
@@ -142,7 +142,7 @@ Then require in your code:
 
 4. **Run:**
    ```bash
-   clj -M:run
+   clojure -M:run
    ```
 
 ## See Also

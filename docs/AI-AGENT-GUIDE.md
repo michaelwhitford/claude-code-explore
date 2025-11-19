@@ -16,7 +16,7 @@ source ./setup/setup-clojure.sh
 
 # Step 4: Test with example
 cd examples/greenfield/simple-app
-clj -M:run
+clojure -M:run
 ```
 
 ## Understanding This Repository
@@ -57,7 +57,7 @@ User has existing Clojure project with `deps.edn` in their repository.
 **Actions:**
 1. Run setup: `source ./setup/setup-clojure.sh`
 2. Reference example: `examples/existing-project/deps-edn-example/`
-3. Test their project: `clj -M:run` (or their specific command)
+3. Test their project: `clojure -M:run` (or their specific command)
 
 **Expected outcome:** Their existing project can download dependencies and run
 
@@ -161,7 +161,7 @@ Verify end-to-end functionality:
 
 ```bash
 cd examples/greenfield/simple-app
-clj -M:run
+clojure -M:run
 ```
 
 **Expected output:**

@@ -150,7 +150,7 @@ fi
 
 # Proceed with your build
 cd ../examples/greenfield/simple-app
-clj -M:run
+clojure -M:run
 ```
 
 ## Understanding Test Output

@@ -225,7 +225,7 @@ User runs: `clojure -Sdeps '{:deps {cheshire/cheshire {:mvn/version "5.11.0"}}}'
 
 ### Example 2: Running a REPL
 
-User runs: `clj`
+User runs: `clojure`
 
 **Flow:**
 
