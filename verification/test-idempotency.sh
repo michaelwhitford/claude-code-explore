@@ -12,6 +12,8 @@
 set +e  # Disable errexit to allow test failures without stopping execution
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SETUP_SCRIPT="$REPO_ROOT/setup/setup-clojure.sh"
 PROXY_PORT="${PROXY_PORT:-8888}"
 PROXY_LOG="/tmp/proxy.log"
 MAVEN_SETTINGS="$HOME/.m2/settings.xml"
@@ -110,7 +112,7 @@ for i in {1..5}; do
     info "Run #$i..."
 
     # Source the setup script (disable errexit temporarily as setup script has set -e)
-    (set +e; source "$SCRIPT_DIR/setup-clojure.sh") > /dev/null 2>&1
+    (set +e; source "$SETUP_SCRIPT") > /dev/null 2>&1
     set +e  # Ensure errexit is off after sourcing
 
     # Capture state after this run
@@ -232,7 +234,7 @@ if pgrep -f "proxy-wrapper.py" > /dev/null; then
 fi
 
 info "Running setup script to test recovery..."
-source "$SCRIPT_DIR/setup-clojure.sh" > /dev/null 2>&1
+source "$SETUP_SCRIPT" > /dev/null 2>&1
 
 if pgrep -f "proxy-wrapper.py.*$PROXY_PORT" > /dev/null; then
     pass "Setup script successfully restarted proxy (recovery works)"
@@ -259,7 +261,7 @@ if [ -f "$GRADLE_PROPS" ]; then
 fi
 
 info "Running setup script to recreate configs..."
-source "$SCRIPT_DIR/setup-clojure.sh" > /dev/null 2>&1
+source "$SETUP_SCRIPT" > /dev/null 2>&1
 
 if [ -f "$MAVEN_SETTINGS" ]; then
     pass "Maven settings.xml recreated"
@@ -287,7 +289,7 @@ fi
 section "Test 6: Testing environment variable consistency"
 
 # Run setup again
-source "$SCRIPT_DIR/setup-clojure.sh" > /dev/null 2>&1
+source "$SETUP_SCRIPT" > /dev/null 2>&1
 
 if [ -n "$JAVA_TOOL_OPTIONS" ]; then
     pass "JAVA_TOOL_OPTIONS is set"
@@ -310,7 +312,7 @@ fi
 section "Test 7: Testing port change handling"
 
 info "Running setup with different port (9999)..."
-PROXY_PORT=9999 source "$SCRIPT_DIR/setup-clojure.sh" > /dev/null 2>&1
+PROXY_PORT=9999 source "$SETUP_SCRIPT" > /dev/null 2>&1
 
 # Check if old proxy on 8888 was stopped
 if pgrep -f "proxy-wrapper.py.*8888" > /dev/null; then
@@ -335,7 +337,7 @@ fi
 
 # Restore original port
 info "Restoring original port ($PROXY_PORT)..."
-PROXY_PORT=8888 source "$SCRIPT_DIR/setup-clojure.sh" > /dev/null 2>&1
+PROXY_PORT=8888 source "$SETUP_SCRIPT" > /dev/null 2>&1
 
 # ============================================================
 # Test 8: Concurrent Execution Safety
@@ -345,7 +347,7 @@ section "Test 8: Testing safety under rapid execution"
 
 info "Running setup script 3 times rapidly..."
 for i in {1..3}; do
-    (source "$SCRIPT_DIR/setup-clojure.sh") > /dev/null 2>&1
+    (source "$SETUP_SCRIPT") > /dev/null 2>&1
     sleep 0.5
 done
 

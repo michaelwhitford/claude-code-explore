@@ -274,36 +274,37 @@ else
 fi
 
 # ============================================================
-# Test 7: Test Project Verification
+# Test 7: Example Project Verification
 # ============================================================
 
-section "Test 7: Test Project Verification"
+section "Test 7: Example Project Verification"
 
-if [ -d "$SCRIPT_DIR/test-clojure-deps" ]; then
-    pass "Test project directory exists"
+EXAMPLE_DIR="$SCRIPT_DIR/../examples/greenfield/simple-app"
+if [ -d "$EXAMPLE_DIR" ]; then
+    pass "Example project directory exists"
 
-    if [ -f "$SCRIPT_DIR/test-clojure-deps/deps.edn" ]; then
-        pass "Test project deps.edn exists"
+    if [ -f "$EXAMPLE_DIR/deps.edn" ]; then
+        pass "Example project deps.edn exists"
     else
-        fail "Test project deps.edn not found"
+        fail "Example project deps.edn not found"
     fi
 
-    if [ -f "$SCRIPT_DIR/test-clojure-deps/src/hello/core.clj" ]; then
-        pass "Test project source file exists"
+    if [ -f "$EXAMPLE_DIR/src/simple/core.clj" ]; then
+        pass "Example project source file exists"
 
-        echo "Running test project..."
-        cd "$SCRIPT_DIR/test-clojure-deps"
+        echo "Running example project..."
+        cd "$EXAMPLE_DIR"
         if timeout 120 clojure -M:run > /dev/null 2>&1; then
-            pass "Test project executes successfully"
+            pass "Example project executes successfully"
         else
-            fail "Test project execution failed"
+            fail "Example project execution failed"
         fi
         cd "$SCRIPT_DIR"
     else
-        fail "Test project source file not found"
+        fail "Example project source file not found"
     fi
 else
-    warn "Test project directory not found (optional)"
+    warn "Example project directory not found (optional)"
 fi
 
 # ============================================================

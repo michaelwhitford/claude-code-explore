@@ -45,6 +45,8 @@ class ProxyHandler:
     def handle_client(self, client_socket, address):
         """Handle a client connection."""
         try:
+            # Set timeout to prevent hanging on slow clients
+            client_socket.settimeout(30)
             request = client_socket.recv(4096).decode('utf-8', errors='ignore')
             if not request:
                 client_socket.close()

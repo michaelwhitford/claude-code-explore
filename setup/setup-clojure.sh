@@ -19,6 +19,14 @@ set -e
 PROXY_PORT="${PROXY_PORT:-8888}"
 PROXY_LOG="/tmp/proxy.log"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Validate PROXY_PORT
+if ! [[ "$PROXY_PORT" =~ ^[0-9]+$ ]] || [ "$PROXY_PORT" -lt 1024 ] || [ "$PROXY_PORT" -gt 65535 ]; then
+    echo "[ERROR] Invalid PROXY_PORT: $PROXY_PORT"
+    echo "  Port must be a number between 1024 and 65535"
+    return 1
+fi
 
 echo "============================================================"
 echo "Clojure Development Setup for Claude Code"
@@ -49,11 +57,12 @@ if command -v clojure &> /dev/null; then
     clojure --version
 else
     echo "Installing Clojure CLI..."
-    if [ -f "$SCRIPT_DIR/linux-install-1.11.1.1435.sh" ]; then
-        bash "$SCRIPT_DIR/linux-install-1.11.1.1435.sh"
+    INSTALLER_PATH="$REPO_ROOT/installers/linux-install-1.11.1.1435.sh"
+    if [ -f "$INSTALLER_PATH" ]; then
+        bash "$INSTALLER_PATH"
         echo "[OK] Clojure CLI installed successfully"
     else
-        echo "[ERROR] Clojure installer not found: $SCRIPT_DIR/linux-install-1.11.1.1435.sh"
+        echo "[ERROR] Clojure installer not found: $INSTALLER_PATH"
         echo "  Please ensure the installer is in the repository"
         return 1
     fi
@@ -76,6 +85,21 @@ else
         echo "  Stopping old proxy wrapper..."
         kill $OLD_PID 2>/dev/null || true
         sleep 1
+    fi
+
+    # Check if port is available
+    if command -v netstat &> /dev/null; then
+        if netstat -tuln 2>/dev/null | grep -q ":$PROXY_PORT "; then
+            echo "[WARN] Port $PROXY_PORT appears to be in use by another process"
+            echo "  The proxy may fail to start. Consider using a different port:"
+            echo "  PROXY_PORT=8889 source setup-clojure.sh"
+        fi
+    elif command -v ss &> /dev/null; then
+        if ss -tuln 2>/dev/null | grep -q ":$PROXY_PORT "; then
+            echo "[WARN] Port $PROXY_PORT appears to be in use by another process"
+            echo "  The proxy may fail to start. Consider using a different port:"
+            echo "  PROXY_PORT=8889 source setup-clojure.sh"
+        fi
     fi
 
     echo "Starting proxy wrapper on port $PROXY_PORT..."
@@ -190,7 +214,7 @@ echo "  # Show classpath"
 echo "  clj -Spath"
 echo ""
 echo "Try the example project:"
-echo "  cd test-clojure-deps && clj -M:run"
+echo "  cd $REPO_ROOT/examples/greenfield/simple-app && clj -M:run"
 echo ""
 echo "To check proxy activity:"
 echo "  tail -f $PROXY_LOG"
