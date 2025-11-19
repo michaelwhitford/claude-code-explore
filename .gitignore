@@ -1,0 +1,56 @@
+# Build outputs
+build/
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# Maven
+.m2/repository/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/tmp/
+
+# Clojure
+.cpcache/
+.nrepl-port
+.lein-*
+pom.xml.asc
+
+# Allow pom.xml in test directories
+!test-maven/pom.xml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~.nib

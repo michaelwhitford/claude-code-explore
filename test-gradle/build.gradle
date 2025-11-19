@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.test'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://repo.clojars.org/"
+    }
+}
+
+dependencies {
+    implementation 'org.clojure:clojure:1.11.1'
+}
+
+tasks.register('testDependencies') {
+    doLast {
+        configurations.runtimeClasspath.each { println it }
+    }
+}
