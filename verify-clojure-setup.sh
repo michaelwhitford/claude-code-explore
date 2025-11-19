@@ -13,13 +13,6 @@ PROXY_PORT="${PROXY_PORT:-8888}"
 PROXY_LOG="/tmp/proxy.log"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
 # Counters
 PASSED=0
 FAILED=0
@@ -38,22 +31,22 @@ echo ""
 
 # Helper functions
 pass() {
-    echo -e "${GREEN}✓${NC} $1"
+    echo "[PASS] $1"
     ((PASSED++))
 }
 
 fail() {
-    echo -e "${RED}✗${NC} $1"
+    echo "[FAIL] $1"
     ((FAILED++))
 }
 
 warn() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    echo "[WARN] $1"
     ((WARNINGS++))
 }
 
 info() {
-    echo -e "${BLUE}ℹ${NC} $1"
+    echo "[INFO] $1"
 }
 
 section() {
@@ -322,19 +315,19 @@ echo "============================================================"
 echo "Verification Summary"
 echo "============================================================"
 echo ""
-echo -e "${GREEN}Passed:${NC}   $PASSED"
-echo -e "${RED}Failed:${NC}   $FAILED"
-echo -e "${YELLOW}Warnings:${NC} $WARNINGS"
+echo "Passed:   $PASSED"
+echo "Failed:   $FAILED"
+echo "Warnings: $WARNINGS"
 echo ""
 
 if [ $FAILED -eq 0 ]; then
-    echo -e "${GREEN}✓ All critical tests passed!${NC}"
+    echo "[PASS] All critical tests passed!"
     echo ""
     echo "Your Clojure runtime is properly configured and working."
     echo ""
     exit 0
 else
-    echo -e "${RED}✗ Some tests failed!${NC}"
+    echo "[FAIL] Some tests failed!"
     echo ""
     echo "Please run setup-clojure.sh to fix issues:"
     echo "  source setup-clojure.sh"

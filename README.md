@@ -115,7 +115,44 @@ dependencies {
 
 The setup script automatically configures Gradle proxy settings.
 
+## Verification and Testing
+
+### Verify Your Setup
+
+Run the verification script to check if everything is configured correctly:
+
+```bash
+bash verify-clojure-setup.sh
+```
+
+This script tests:
+- Clojure CLI installation
+- Proxy wrapper process and port binding
+- Configuration files (Maven, Gradle)
+- Environment variables
+- Dependency resolution from Maven Central and Clojars
+- Code execution
+
+### Test Idempotency
+
+Run the idempotency test to verify the setup script can be run multiple times safely:
+
+```bash
+bash test-idempotency.sh
+```
+
+This script verifies:
+- No duplicate processes or configurations
+- Stable configuration across multiple runs
+- Recovery from broken states
+- Port change handling
+
 ## Troubleshooting
+
+### Quick verification
+```bash
+bash verify-clojure-setup.sh
+```
 
 ### Check if proxy is running
 ```bash
@@ -155,6 +192,8 @@ The proxy wrapper (`proxy-wrapper.py`) solves this by:
 |------|---------|
 | `setup-clojure.sh` | Main setup script (idempotent, reusable) |
 | `proxy-wrapper.py` | Local proxy that adds authentication |
+| `verify-clojure-setup.sh` | Verification script to test the setup |
+| `test-idempotency.sh` | Test script to verify setup is idempotent |
 | `test-clojure-deps/` | Example Clojure project with deps.edn |
 
 ## Verified To Work
